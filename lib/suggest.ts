@@ -1,4 +1,4 @@
-import Anthropic from '@anthropic-ai/sdk'
+import { GoogleGenerativeAI } from '@google/generative-ai'
 import { v4 as uuidv4 } from 'uuid'
 import type { Child, Toy, Suggestion, AppMode, ParentCondition, TimeSlot } from './types'
 import { calcAge, PHYSICAL_GOALS, APP_MODES, PARTICIPATIONS, DEVELOPMENT_AREAS } from './types'
@@ -182,22 +182,14 @@ export async function generateSuggestions(
   condition: ParentCondition | null,
   suggestionCount = 5,
 ): Promise<Suggestion[]> {
-  const client = new Anthropic({
-    apiKey,
-    dangerouslyAllowBrowser: true,
-  })
+  const genAI = new GoogleGenerativeAI(apiKey)
+  const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' })
 
   const checkedToys = toys.filter((t) => t.checked)
   const prompt = buildPrompt(children, checkedToys, mode ?? 'weekend', condition ?? null, suggestionCount)
 
-  const stream = await client.messages.stream({
-    model: 'claude-sonnet-4-20250514',
-    max_tokens: 4096,
-    messages: [{ role: 'user', content: prompt }],
-  })
-
-  const response = await stream.finalMessage()
-  const text = response.content.find((b) => b.type === 'text')?.text ?? ''
+  const result = await model.generateContent(prompt)
+  const text = result.response.text()
 
   const jsonMatch = text.match(/```json\n?([\s\S]*?)\n?```/) || text.match(/\{[\s\S]*\}/)
   if (!jsonMatch) {

@@ -224,14 +224,16 @@ export default function Settings({ settings, onUpdate, onClose }: Props) {
           <SectionTitle>AI設定</SectionTitle>
           <Card>
             <div className="py-3">
-              <p className="text-sm font-medium text-gray-800 mb-1">Anthropic APIキー</p>
-              <p className="text-xs text-gray-500 mb-3">端末内のみに保存されます。</p>
+              <p className="text-sm font-medium text-gray-800 mb-1">Google Gemini APIキー</p>
+              <p className="text-xs text-gray-500 mb-3">
+                <a href="https://aistudio.google.com/apikey" target="_blank" rel="noreferrer" className="text-orange-500 underline">Google AI Studio</a>で無料取得できます。端末内のみに保存されます。
+              </p>
               <div className="relative">
                 <input
                   type={showApiKey ? 'text' : 'password'}
                   value={settings.anthropicApiKey ?? ''}
                   onChange={(e) => update({ anthropicApiKey: e.target.value })}
-                  placeholder="sk-ant-api03-..."
+                  placeholder="AIza..."
                   className="w-full text-sm bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 pr-10 focus:outline-none focus:border-orange-400"
                 />
                 <button
@@ -242,7 +244,7 @@ export default function Settings({ settings, onUpdate, onClose }: Props) {
                 </button>
               </div>
               {settings.anthropicApiKey ? (
-                <p className="text-xs text-green-600 mt-2">✓ APIキーが設定されています</p>
+                <p className="text-xs text-green-600 mt-2">✓ APIキーが設定されています（無料で使えます）</p>
               ) : (
                 <p className="text-xs text-orange-600 mt-2">⚠ APIキーを入力すると遊び提案が使えます</p>
               )}

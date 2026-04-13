@@ -151,7 +151,7 @@ export default function PlaySuggestions({ kids: children, toys, settings, onSett
       return
     }
     if (!settings.anthropicApiKey) {
-      setError('設定（右上の⚙️）からAnthropicのAPIキーを入力してください')
+      setError('設定（右上の⚙️）からGemini APIキーを入力してください')
       return
     }
     setLoading(true)
