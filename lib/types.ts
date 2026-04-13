@@ -149,6 +149,7 @@ export interface AppSettings {
   conditionEnabled: boolean // コンディション入力機能を使うか
   condition: ParentCondition | null
   onboardingDone: boolean
+  anthropicApiKey: string
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -159,6 +160,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   conditionEnabled: true,
   condition: null,
   onboardingDone: false,
+  anthropicApiKey: '',
 }
 
 // ─── ユーティリティ ──────────────────────────────────────────

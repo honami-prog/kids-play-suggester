@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import type { Child, Toy, Suggestion, AppSettings, ParentCondition } from '@/lib/types'
 import { isConditionForToday } from '@/lib/types'
 import { getSuggestions, saveAllSuggestions, toggleFavorite, clearOldSuggestions } from '@/lib/db'
+import { generateSuggestions } from '@/lib/suggest'
 import ModeHome from './ModeHome'
 
 interface Props {
@@ -149,22 +150,23 @@ export default function PlaySuggestions({ kids: children, toys, settings, onSett
       setError('先に「子供」タブで子供を登録してください')
       return
     }
+    if (!settings.anthropicApiKey) {
+      setError('設定（右上の⚙️）からAnthropicのAPIキーを入力してください')
+      return
+    }
     setLoading(true)
     setError(null)
     try {
       await clearOldSuggestions()
       const effectiveCondition = conditionEnabled && isConditionForToday(condition) ? condition : null
-      const res = await fetch('/api/suggest', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ children, toys, mode, condition: effectiveCondition }),
-      })
-      if (!res.ok) {
-        const data = await res.json()
-        throw new Error(data.error ?? 'エラーが発生しました')
-      }
-      const data = (await res.json()) as { suggestions: Suggestion[] }
-      await saveAllSuggestions(data.suggestions)
+      const newSuggestions = await generateSuggestions(
+        settings.anthropicApiKey,
+        children,
+        toys,
+        mode,
+        effectiveCondition,
+      )
+      await saveAllSuggestions(newSuggestions)
       setSuggestions(await getSuggestions())
     } catch (e) {
       setError(e instanceof Error ? e.message : 'エラーが発生しました')

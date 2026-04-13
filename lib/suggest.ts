@@ -1,12 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk'
-import { NextRequest, NextResponse } from 'next/server'
-import type { Child, Toy, Suggestion, AppMode, ParentCondition, TimeSlot } from '@/lib/types'
-import { calcAge, PHYSICAL_GOALS, APP_MODES, PARTICIPATIONS, DEVELOPMENT_AREAS } from '@/lib/types'
 import { v4 as uuidv4 } from 'uuid'
-
-const client = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-})
+import type { Child, Toy, Suggestion, AppMode, ParentCondition, TimeSlot } from './types'
+import { calcAge, PHYSICAL_GOALS, APP_MODES, PARTICIPATIONS, DEVELOPMENT_AREAS } from './types'
 
 const DEVELOPMENT_AREA_IDS = DEVELOPMENT_AREAS.map((a) => a.id).join(' / ')
 
@@ -29,6 +24,21 @@ function suggestionTemplate(mode: AppMode): string {
     )
   }
   return base + `\n        }`
+}
+
+function modeGuidance(mode: AppMode): string {
+  switch (mode) {
+    case 'weekend':
+      return '週末にまとめて遊ぶため、少し手間をかけても楽しめる特別な遊びも歓迎。所要時間は30分〜1時間程度でもOK。'
+    case 'working':
+      return '帰宅後の短い時間（15〜30分）で完結する遊びを優先。準備ゼロまたは最小限で、道具不要・静かな遊びを中心に。'
+    case 'fulltime':
+      return '一日中一緒に過ごすため、活動的なものから静かなものまで多様に。時間帯別に適した活動を割り当ててください。'
+    case 'quick':
+      return 'すぐ始められる最もシンプルな提案を。準備ゼロ・道具なし・5〜10分でできるものを優先。'
+    case 'occasional':
+      return '気軽に使えるシンプルな提案。特別な準備なく始められる遊びを優先。'
+  }
 }
 
 function buildPrompt(
@@ -156,98 +166,75 @@ ${mode === 'fulltime' ? `- timeSlot: "morning"/"afternoon"/"evening" のいず�
 \`\`\``
 }
 
-function modeGuidance(mode: AppMode): string {
-  switch (mode) {
-    case 'weekend':
-      return '週末にまとめて遊ぶため、少し手間をかけても楽しめる特別な遊びも歓迎。所要時間は30分〜1時間程度でもOK。'
-    case 'working':
-      return '帰宅後の短い時間（15〜30分）で完結する遊びを優先。準備ゼロまたは最小限で、道具不要・静かな遊びを中心に。'
-    case 'fulltime':
-      return '一日中一緒に過ごすため、活動的なものから静かなものまで多様に。時間帯別に適した活動を割り当ててください。'
-    case 'quick':
-      return 'すぐ始められる最もシンプルな提案を。準備ゼロ・道具なし・5〜10分でできるものを優先。'
-    case 'occasional':
-      return '気軽に使えるシンプルな提案。特別な準備なく始められる遊びを優先。'
+export async function generateSuggestions(
+  apiKey: string,
+  children: Child[],
+  toys: Toy[],
+  mode: AppMode,
+  condition: ParentCondition | null,
+): Promise<Suggestion[]> {
+  const client = new Anthropic({
+    apiKey,
+    dangerouslyAllowBrowser: true,
+  })
+
+  const checkedToys = toys.filter((t) => t.checked)
+  const prompt = buildPrompt(children, checkedToys, mode ?? 'weekend', condition ?? null)
+
+  const stream = await client.messages.stream({
+    model: 'claude-sonnet-4-20250514',
+    max_tokens: 4096,
+    messages: [{ role: 'user', content: prompt }],
+  })
+
+  const response = await stream.finalMessage()
+  const text = response.content.find((b) => b.type === 'text')?.text ?? ''
+
+  const jsonMatch = text.match(/```json\n?([\s\S]*?)\n?```/) || text.match(/\{[\s\S]*\}/)
+  if (!jsonMatch) {
+    throw new Error('AIの応答を解析できませんでした')
   }
-}
 
-export async function POST(req: NextRequest) {
-  try {
-    const { children, toys, mode, condition } = (await req.json()) as {
-      children: Child[]
-      toys: Toy[]
-      mode: AppMode
-      condition: ParentCondition | null
-    }
-
-    if (!children || children.length === 0) {
-      return NextResponse.json({ error: '子供の情報がありません' }, { status: 400 })
-    }
-
-    const checkedToys = toys.filter((t) => t.checked)
-    const prompt = buildPrompt(children, checkedToys, mode ?? 'weekend', condition ?? null)
-
-    const stream = await client.messages.stream({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 4096,
-      messages: [{ role: 'user', content: prompt }],
-    })
-
-    const response = await stream.finalMessage()
-    const text = response.content.find((b) => b.type === 'text')?.text ?? ''
-
-    const jsonMatch = text.match(/```json\n?([\s\S]*?)\n?```/) || text.match(/\{[\s\S]*\}/)
-    if (!jsonMatch) {
-      return NextResponse.json({ error: 'AIの応答を解析できませんでした' }, { status: 500 })
-    }
-
-    const jsonStr = jsonMatch[1] ?? jsonMatch[0]
-    const parsed = JSON.parse(jsonStr) as {
-      results: Array<{
-        childId: string | null
-        childName: string | null
-        suggestions: Array<{
-          title: string
-          description: string
-          materials: string[]
-          durationMinutes?: number
-          isIndoor?: boolean
-          isQuiet?: boolean
-          timeSlot?: TimeSlot
-          developmentArea?: string
-        }>
+  const jsonStr = jsonMatch[1] ?? jsonMatch[0]
+  const parsed = JSON.parse(jsonStr) as {
+    results: Array<{
+      childId: string | null
+      childName: string | null
+      suggestions: Array<{
+        title: string
+        description: string
+        materials: string[]
+        durationMinutes?: number
+        isIndoor?: boolean
+        isQuiet?: boolean
+        timeSlot?: TimeSlot
+        developmentArea?: string
       }>
-    }
-
-    const now = new Date().toISOString()
-    const suggestions: Suggestion[] = []
-
-    for (const group of parsed.results) {
-      for (const s of group.suggestions) {
-        suggestions.push({
-          id: uuidv4(),
-          childId: group.childId,
-          childName: group.childName,
-          title: s.title,
-          description: s.description,
-          materials: s.materials ?? [],
-          favorite: false,
-          createdAt: now,
-          durationMinutes: s.durationMinutes,
-          isIndoor: s.isIndoor,
-          isQuiet: s.isQuiet,
-          timeSlot: s.timeSlot,
-          developmentArea: s.developmentArea,
-        })
-      }
-    }
-
-    return NextResponse.json({ suggestions })
-  } catch (error) {
-    console.error('API error:', error)
-    return NextResponse.json(
-      { error: 'エラーが発生しました。もう一度お試しください。' },
-      { status: 500 },
-    )
+    }>
   }
+
+  const now = new Date().toISOString()
+  const suggestions: Suggestion[] = []
+
+  for (const group of parsed.results) {
+    for (const s of group.suggestions) {
+      suggestions.push({
+        id: uuidv4(),
+        childId: group.childId,
+        childName: group.childName,
+        title: s.title,
+        description: s.description,
+        materials: s.materials ?? [],
+        favorite: false,
+        createdAt: now,
+        durationMinutes: s.durationMinutes,
+        isIndoor: s.isIndoor,
+        isQuiet: s.isQuiet,
+        timeSlot: s.timeSlot,
+        developmentArea: s.developmentArea,
+      })
+    }
+  }
+
+  return suggestions
 }

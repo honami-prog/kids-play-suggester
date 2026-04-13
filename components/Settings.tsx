@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import type { AppSettings, AppMode, UserProfile } from '@/lib/types'
 import { APP_MODES, USER_PROFILES } from '@/lib/types'
 
@@ -59,6 +60,7 @@ function Card({ children }: { children: React.ReactNode }) {
 
 export default function Settings({ settings, onUpdate, onClose }: Props) {
   const update = (partial: Partial<AppSettings>) => onUpdate({ ...settings, ...partial })
+  const [showApiKey, setShowApiKey] = useState(false)
 
   return (
     <div className="fixed inset-0 bg-orange-50 z-40 flex flex-col">
@@ -169,6 +171,39 @@ export default function Settings({ settings, onUpdate, onClose }: Props) {
               オフの場合：外出可能・一緒に遊べる設定でAIが提案します
             </p>
           )}
+        </section>
+
+        {/* AI設定 */}
+        <section>
+          <SectionTitle>AI設定</SectionTitle>
+          <Card>
+            <div className="py-3">
+              <p className="text-sm font-medium text-gray-800 mb-1">Anthropic APIキー</p>
+              <p className="text-xs text-gray-500 mb-3">
+                端末内のみに保存されます。
+              </p>
+              <div className="relative">
+                <input
+                  type={showApiKey ? 'text' : 'password'}
+                  value={settings.anthropicApiKey ?? ''}
+                  onChange={(e) => update({ anthropicApiKey: e.target.value })}
+                  placeholder="sk-ant-api03-..."
+                  className="w-full text-sm bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 pr-10 focus:outline-none focus:border-orange-400"
+                />
+                <button
+                  onClick={() => setShowApiKey((v) => !v)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"
+                >
+                  {showApiKey ? '🙈' : '👁'}
+                </button>
+              </div>
+              {settings.anthropicApiKey ? (
+                <p className="text-xs text-green-600 mt-2">✓ APIキーが設定されています</p>
+              ) : (
+                <p className="text-xs text-orange-600 mt-2">⚠ APIキーを入力すると遊び提案が使えます</p>
+              )}
+            </div>
+          </Card>
         </section>
 
         <div className="h-4" />

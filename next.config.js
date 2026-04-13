@@ -6,8 +6,16 @@ const withPWA = require('next-pwa')({
   disable: process.env.NODE_ENV === 'development',
 })
 
+const basePath = '/kids-play-suggester'
+
 const nextConfig = {
   reactStrictMode: true,
+  output: 'export',
+  basePath,
+  assetPrefix: basePath,
+  images: {
+    unoptimized: true,
+  },
 }
 
 module.exports = withPWA(nextConfig)

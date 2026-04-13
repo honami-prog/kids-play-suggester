@@ -2,7 +2,7 @@
   "name": "こどもあそびていあん",
   "short_name": "あそびていあん",
   "description": "AIが子供に合った遊びを提案するアプリ",
-  "start_url": "/",
+  "start_url": "/kids-play-suggester/",
   "display": "standalone",
   "background_color": "#fff7ed",
   "theme_color": "#f97316",
