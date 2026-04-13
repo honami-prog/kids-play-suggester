@@ -151,6 +151,8 @@ export interface ParentCondition {
   participation: Participation
 }
 
+export type SuggestionSource = 'ai' | 'db'
+
 export interface AppSettings {
   key: 'app'
   mode: AppMode
@@ -162,6 +164,7 @@ export interface AppSettings {
   anthropicApiKey: string
   suggestionCount: number
   customFeatures: string[]
+  suggestionSource: SuggestionSource
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -175,6 +178,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   anthropicApiKey: '',
   suggestionCount: 5,
   customFeatures: ['tantrum', 'timeslot'],
+  suggestionSource: 'db',
 }
 
 // ─── ユーティリティ ──────────────────────────────────────────

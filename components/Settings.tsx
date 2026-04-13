@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import type { AppSettings, AppMode, UserProfile } from '@/lib/types'
+import type { AppSettings, AppMode, UserProfile, SuggestionSource } from '@/lib/types'
 import { APP_MODES, USER_PROFILES, CUSTOM_FEATURES } from '@/lib/types'
 
 interface Props {
@@ -219,9 +219,37 @@ export default function Settings({ settings, onUpdate, onClose }: Props) {
           </Card>
         </section>
 
-        {/* AI設定 */}
+        {/* 提案方法 */}
         <section>
-          <SectionTitle>AI設定</SectionTitle>
+          <SectionTitle>提案方法</SectionTitle>
+          <div className="grid grid-cols-2 gap-2">
+            {([
+              { id: 'db', icon: '📚', label: 'データベース', desc: '即時・無料・オフラインOK' },
+              { id: 'ai', icon: '✨', label: 'AI（Gemini）', desc: '毎回新しい提案・APIキー必要' },
+            ] as { id: SuggestionSource; icon: string; label: string; desc: string }[]).map((s) => (
+              <button
+                key={s.id}
+                onClick={() => update({ suggestionSource: s.id })}
+                className={`flex flex-col items-center gap-1 px-3 py-4 rounded-2xl border-2 transition-all text-center ${
+                  (settings.suggestionSource ?? 'db') === s.id
+                    ? 'border-orange-500 bg-orange-50 shadow-sm'
+                    : 'border-gray-200 bg-white hover:border-orange-200'
+                }`}
+              >
+                <span className="text-2xl">{s.icon}</span>
+                <p className={`text-sm font-bold ${(settings.suggestionSource ?? 'db') === s.id ? 'text-orange-700' : 'text-gray-800'}`}>
+                  {s.label}
+                </p>
+                <p className="text-xs text-gray-500 leading-tight">{s.desc}</p>
+              </button>
+            ))}
+          </div>
+        </section>
+
+        {/* AI設定（AIモード時のみ表示） */}
+        {(settings.suggestionSource ?? 'db') === 'ai' && (
+        <section>
+          <SectionTitle>AI設定（Gemini）</SectionTitle>
           <Card>
             <div className="py-3">
               <p className="text-sm font-medium text-gray-800 mb-1">Google Gemini APIキー</p>
@@ -251,6 +279,7 @@ export default function Settings({ settings, onUpdate, onClose }: Props) {
             </div>
           </Card>
         </section>
+        )}
 
         <div className="h-4" />
       </div>

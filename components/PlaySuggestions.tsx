@@ -5,6 +5,7 @@ import type { Child, Toy, Suggestion, AppSettings, ParentCondition } from '@/lib
 import { isConditionForToday } from '@/lib/types'
 import { getSuggestions, saveAllSuggestions, toggleFavorite, clearOldSuggestions } from '@/lib/db'
 import { generateSuggestions } from '@/lib/suggest'
+import { generateFromDB } from '@/lib/suggestions-db'
 import ModeHome from './ModeHome'
 
 interface Props {
@@ -150,7 +151,8 @@ export default function PlaySuggestions({ kids: children, toys, settings, onSett
       setError('先に「子供」タブで子供を登録してください')
       return
     }
-    if (!settings.anthropicApiKey) {
+    const useAI = (settings.suggestionSource ?? 'db') === 'ai'
+    if (useAI && !settings.anthropicApiKey) {
       setError('設定（右上の⚙️）からGemini APIキーを入力してください')
       return
     }
@@ -159,14 +161,20 @@ export default function PlaySuggestions({ kids: children, toys, settings, onSett
     try {
       await clearOldSuggestions()
       const effectiveCondition = conditionEnabled && isConditionForToday(condition) ? condition : null
-      const newSuggestions = await generateSuggestions(
-        settings.anthropicApiKey,
-        children,
-        toys,
-        mode,
-        effectiveCondition,
-        settings.suggestionCount ?? 5,
-      )
+      const count = settings.suggestionCount ?? 5
+      let newSuggestions
+      if (useAI) {
+        newSuggestions = await generateSuggestions(
+          settings.anthropicApiKey,
+          children,
+          toys,
+          mode,
+          effectiveCondition,
+          count,
+        )
+      } else {
+        newSuggestions = generateFromDB(children, toys, mode, effectiveCondition, count)
+      }
       await saveAllSuggestions(newSuggestions)
       setSuggestions(await getSuggestions())
     } catch (e) {
