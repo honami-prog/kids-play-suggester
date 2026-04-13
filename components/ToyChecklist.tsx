@@ -106,9 +106,10 @@ interface ToyItemProps {
   toy: Toy
   onToggle: (toy: Toy) => void
   onDelete: (id: string) => void
+  onSwap: (toy: Toy) => void
 }
 
-function PermanentItem({ toy, onToggle, onDelete }: ToyItemProps) {
+function PermanentItem({ toy, onToggle, onDelete, onSwap }: ToyItemProps) {
   return (
     <div className="bg-white rounded-xl px-4 py-3 shadow-sm border border-orange-100 flex items-center gap-3">
       <button
@@ -125,6 +126,13 @@ function PermanentItem({ toy, onToggle, onDelete }: ToyItemProps) {
         {toy.name}
       </span>
       <button
+        onClick={() => onSwap(toy)}
+        className="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-500 hover:bg-blue-50 hover:text-blue-600 transition-colors flex-shrink-0"
+        title="消耗品に移動"
+      >
+        →消耗品
+      </button>
+      <button
         onClick={() => onDelete(toy.id)}
         className="text-gray-300 hover:text-red-400 transition-colors text-lg leading-none"
       >
@@ -134,11 +142,17 @@ function PermanentItem({ toy, onToggle, onDelete }: ToyItemProps) {
   )
 }
 
-function ConsumableItem({ toy, onToggle, onDelete }: ToyItemProps) {
+function ConsumableItem({ toy, onToggle, onDelete, onSwap }: ToyItemProps) {
   return (
     <div className="bg-white rounded-xl px-4 py-3 shadow-sm border border-orange-100 flex items-center gap-3">
       <span className="flex-1 text-sm font-medium text-gray-800">{toy.name}</span>
-      {/* 在庫トグル */}
+      <button
+        onClick={() => onSwap(toy)}
+        className="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-500 hover:bg-orange-50 hover:text-orange-600 transition-colors flex-shrink-0"
+        title="常設に移動"
+      >
+        →常設
+      </button>
       <button
         onClick={() => onToggle(toy)}
         className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium border transition-colors ${
@@ -192,6 +206,13 @@ export default function ToyChecklist({ toys, onUpdate }: Props) {
     onUpdate(toys.filter((t) => t.id !== id))
   }
 
+  const handleSwap = async (toy: Toy) => {
+    const newCategory: Category = toy.category === 'permanent' ? 'consumable' : 'permanent'
+    const updated = { ...toy, category: newCategory }
+    await saveToy(updated)
+    onUpdate(toys.map((t) => (t.id === toy.id ? updated : t)))
+  }
+
   return (
     <div className="space-y-5">
       <div>
@@ -239,6 +260,7 @@ export default function ToyChecklist({ toys, onUpdate }: Props) {
                 toy={toy}
                 onToggle={handleToggle}
                 onDelete={handleDelete}
+                onSwap={handleSwap}
               />
             ))}
           </div>
@@ -295,6 +317,7 @@ export default function ToyChecklist({ toys, onUpdate }: Props) {
                 toy={toy}
                 onToggle={handleToggle}
                 onDelete={handleDelete}
+                onSwap={handleSwap}
               />
             ))}
           </div>

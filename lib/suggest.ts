@@ -38,6 +38,8 @@ function modeGuidance(mode: AppMode): string {
       return 'すぐ始められる最もシンプルな提案を。準備ゼロ・道具なし・5〜10分でできるものを優先。'
     case 'occasional':
       return '気軽に使えるシンプルな提案。特別な準備なく始められる遊びを優先。'
+    case 'custom':
+      return '多様な遊びをバランスよく提案してください。'
   }
 }
 
@@ -46,6 +48,7 @@ function buildPrompt(
   checkedToys: Toy[],
   mode: AppMode,
   condition: ParentCondition | null,
+  suggestionCount = 5,
 ): string {
   const currentMode = APP_MODES.find((m) => m.id === mode)
 
@@ -96,6 +99,11 @@ function buildPrompt(
 
   return `あなたは子供の遊びの専門家です。以下の情報をもとに、各子供に合った遊びのアイデアを提案してください。
 
+# 最重要ルール
+- 各子供の年齢・発達段階に応じた**完全に異なる**遊びを提案してください
+- 複数の子供がいる場合、同じタイトルや同じ内容の遊びを異なる子供に重複して提案しないでください
+- 年齢差がある場合は特に、その子の月齢・年齢に特有の発達ニーズに合わせた遊びを選んでください
+
 # 子供の情報
 ${childrenInfo}
 
@@ -111,15 +119,15 @@ ${fulltimeNotes}
 ${children
   .map(
     (c) => `
-## ${c.name}の個人提案（5案）
+## ${c.name}の個人提案（${suggestionCount}案）
 ${c.name}（${(() => {
       const { years, months } = calcAge(c.birthDate)
       return years === 0 ? `${months}ヶ月` : `${years}歳`
-    })()}）に合った遊び5案`,
+    })()}）に合った遊び${suggestionCount}案`,
   )
   .join('\n')}
 
-${isSiblings ? `## 兄弟・姉妹みんなで楽しめる遊び（5案）\n全員が参加できる遊び5案` : ''}
+${isSiblings ? `## 兄弟・姉妹みんなで楽しめる遊び（${suggestionCount}案）\n全員が参加できる遊び${suggestionCount}案` : ''}
 
 # 各提案フィールドの説明
 - durationMinutes: 遊びの所要時間（分）。5/10/15/20/30/45/60のいずれか
@@ -172,6 +180,7 @@ export async function generateSuggestions(
   toys: Toy[],
   mode: AppMode,
   condition: ParentCondition | null,
+  suggestionCount = 5,
 ): Promise<Suggestion[]> {
   const client = new Anthropic({
     apiKey,
@@ -179,7 +188,7 @@ export async function generateSuggestions(
   })
 
   const checkedToys = toys.filter((t) => t.checked)
-  const prompt = buildPrompt(children, checkedToys, mode ?? 'weekend', condition ?? null)
+  const prompt = buildPrompt(children, checkedToys, mode ?? 'weekend', condition ?? null, suggestionCount)
 
   const stream = await client.messages.stream({
     model: 'claude-sonnet-4-20250514',

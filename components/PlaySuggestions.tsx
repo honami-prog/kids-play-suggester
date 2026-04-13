@@ -165,6 +165,7 @@ export default function PlaySuggestions({ kids: children, toys, settings, onSett
         toys,
         mode,
         effectiveCondition,
+        settings.suggestionCount ?? 5,
       )
       await saveAllSuggestions(newSuggestions)
       setSuggestions(await getSuggestions())

@@ -79,44 +79,54 @@ export function currentTimeSlot(): TimeSlot {
 
 // ─── アプリ設定 ──────────────────────────────────────────────
 
-export type AppMode = 'weekend' | 'working' | 'fulltime' | 'quick' | 'occasional'
+export type AppMode = 'weekend' | 'working' | 'fulltime' | 'quick' | 'occasional' | 'custom'
 
 export const APP_MODES = [
   {
     id: 'weekend' as AppMode,
     label: '週末モード',
     icon: '🌅',
-    desc: '週1パパ・週末まとめ派',
-    hint: '週末にまとめて遊び計画を立てたい方向け',
+    desc: '先週のお気に入り振り返り＋今週の提案を1画面で表示',
   },
   {
     id: 'working' as AppMode,
-    label: '毎日・ワーキング版',
+    label: '帰宅後モード',
     icon: '💼',
-    desc: '帰宅後に使いたいママ・パパ',
-    hint: '仕事後の短い時間で使いやすい設計',
+    desc: 'ぐずり対応ウィジェット＋短時間・静か優先の厳選提案を表示',
   },
   {
     id: 'fulltime' as AppMode,
-    label: '毎日・自宅保育版',
+    label: '自宅保育モード',
     icon: '🏠',
-    desc: '日中たっぷり使いたいママ',
-    hint: '一日のあそびプランをしっかり立てたい方向け',
+    desc: '時間帯（朝/昼/夕）別フィルター＋発達ピラミッドを表示',
   },
   {
     id: 'quick' as AppMode,
     label: 'さくっとモード',
     icon: '⚡',
-    desc: 'ちょこちょこあっさり派',
-    hint: 'すぐに提案だけ見たいシンプル派向け',
+    desc: '大きなボタン1つだけのシンプルUI',
   },
   {
     id: 'occasional' as AppMode,
     label: 'たまにモード',
     icon: '🎲',
-    desc: '思い出した時だけ派',
-    hint: '気が向いたときだけ使う方向け',
+    desc: '子供別タブで全提案をリスト表示',
   },
+  {
+    id: 'custom' as AppMode,
+    label: 'カスタムモード',
+    icon: '🛠️',
+    desc: '表示する機能を自分で自由に組み合わせ',
+  },
+] as const
+
+export const CUSTOM_FEATURES = [
+  { id: 'tantrum',             label: 'ぐずり対応ウィジェット',     icon: '🚨', desc: '気分転換の即席アイデアをボタン1つで表示' },
+  { id: 'development_pyramid', label: '発達ピラミッド',             icon: '🔺', desc: 'お気に入りの遊びの発達領域内訳を表示' },
+  { id: 'quick_stock',         label: '消耗品在庫クイック更新',     icon: '🎨', desc: '消耗品の在庫をワンタップで更新' },
+  { id: 'timeslot',            label: '時間帯別フィルター',         icon: '⏰', desc: '朝・昼・夕方で提案を絞り込み' },
+  { id: 'favorites_recap',     label: '前回のお気に入り振り返り',   icon: '⭐', desc: '前回お気に入りにした提案を振り返り' },
+  { id: 'top3_filter',         label: '厳選フィルター',             icon: '⚡', desc: '短時間・静か・道具不要の提案を優先表示' },
 ] as const
 
 export type UserProfile = 'mama' | 'papa' | 'other'
@@ -146,10 +156,12 @@ export interface AppSettings {
   mode: AppMode
   profile: UserProfile
   oneHandMode: boolean
-  conditionEnabled: boolean // コンディション入力機能を使うか
+  conditionEnabled: boolean
   condition: ParentCondition | null
   onboardingDone: boolean
   anthropicApiKey: string
+  suggestionCount: number
+  customFeatures: string[]
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -161,6 +173,8 @@ export const DEFAULT_SETTINGS: AppSettings = {
   condition: null,
   onboardingDone: false,
   anthropicApiKey: '',
+  suggestionCount: 5,
+  customFeatures: ['tantrum', 'timeslot'],
 }
 
 // ─── ユーティリティ ──────────────────────────────────────────

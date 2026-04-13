@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import type { Child, Toy, AppSettings } from '@/lib/types'
-import { DEFAULT_SETTINGS } from '@/lib/types'
+import { DEFAULT_SETTINGS, APP_MODES } from '@/lib/types'
 import { getChildren, getToys, getSettings, saveSettings } from '@/lib/db'
 import ChildrenManager from '@/components/ChildrenManager'
 import ToyChecklist from '@/components/ToyChecklist'
@@ -92,6 +92,7 @@ export default function Home() {
   }
 
   const isOneHand = settings.oneHandMode
+  const currentMode = APP_MODES.find((m) => m.id === settings.mode)
 
   return (
     <>
@@ -116,7 +117,12 @@ export default function Home() {
             <span className="text-2xl">🧒</span>
             <div className="flex-1">
               <h1 className="text-base font-bold leading-tight">こどもあそびていあん</h1>
-              <p className="text-xs text-orange-200">AIがぴったりの遊びを提案</p>
+              {currentMode && (
+                <p className="text-xs text-orange-200 flex items-center gap-1">
+                  <span>{currentMode.icon}</span>
+                  <span>{currentMode.label}</span>
+                </p>
+              )}
             </div>
             {children.length > 0 && (
               <div className="flex -space-x-1">

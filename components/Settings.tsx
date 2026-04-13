@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import type { AppSettings, AppMode, UserProfile } from '@/lib/types'
-import { APP_MODES, USER_PROFILES } from '@/lib/types'
+import { APP_MODES, USER_PROFILES, CUSTOM_FEATURES } from '@/lib/types'
 
 interface Props {
   settings: AppSettings
@@ -62,6 +62,14 @@ export default function Settings({ settings, onUpdate, onClose }: Props) {
   const update = (partial: Partial<AppSettings>) => onUpdate({ ...settings, ...partial })
   const [showApiKey, setShowApiKey] = useState(false)
 
+  const count = settings.suggestionCount ?? 5
+  const customFeatures = settings.customFeatures ?? []
+
+  const toggleCustomFeature = (id: string, on: boolean) => {
+    const next = on ? [...customFeatures, id] : customFeatures.filter((f) => f !== id)
+    update({ customFeatures: next })
+  }
+
   return (
     <div className="fixed inset-0 bg-orange-50 z-40 flex flex-col">
       {/* ヘッダー */}
@@ -113,29 +121,72 @@ export default function Settings({ settings, onUpdate, onClose }: Props) {
               <button
                 key={m.id}
                 onClick={() => update({ mode: m.id as AppMode })}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl border-2 text-left transition-all ${
+                className={`w-full flex items-start gap-3 px-4 py-3 rounded-2xl border-2 text-left transition-all ${
                   settings.mode === m.id
                     ? 'border-orange-500 bg-orange-50 shadow-sm'
                     : 'border-gray-200 bg-white hover:border-orange-200'
                 }`}
               >
-                <span className="text-2xl flex-shrink-0">{m.icon}</span>
+                <span className="text-2xl flex-shrink-0 mt-0.5">{m.icon}</span>
                 <div className="flex-1">
-                  <p
-                    className={`text-sm font-bold ${
-                      settings.mode === m.id ? 'text-orange-700' : 'text-gray-800'
-                    }`}
-                  >
+                  <p className={`text-sm font-bold ${settings.mode === m.id ? 'text-orange-700' : 'text-gray-800'}`}>
                     {m.label}
                   </p>
-                  <p className="text-xs text-gray-500">{m.desc}</p>
+                  <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">{m.desc}</p>
                 </div>
                 {settings.mode === m.id && (
-                  <span className="text-orange-500 font-bold flex-shrink-0">✓</span>
+                  <span className="text-orange-500 font-bold flex-shrink-0 mt-0.5">✓</span>
                 )}
               </button>
             ))}
           </div>
+        </section>
+
+        {/* カスタムモード機能選択 */}
+        {settings.mode === 'custom' && (
+          <section>
+            <SectionTitle>カスタム機能</SectionTitle>
+            <Card>
+              {CUSTOM_FEATURES.map((f) => (
+                <div key={f.id} className="py-1">
+                  <Toggle
+                    checked={customFeatures.includes(f.id)}
+                    onChange={(v) => toggleCustomFeature(f.id, v)}
+                    label={`${f.icon} ${f.label}`}
+                    description={f.desc}
+                  />
+                </div>
+              ))}
+            </Card>
+          </section>
+        )}
+
+        {/* 提案数 */}
+        <section>
+          <SectionTitle>提案数</SectionTitle>
+          <Card>
+            <div className="py-4">
+              <p className="text-sm font-medium text-gray-800 text-center mb-3">
+                1回の提案数（子供1人あたり）
+              </p>
+              <div className="flex items-center justify-center gap-6">
+                <button
+                  onClick={() => update({ suggestionCount: Math.max(1, count - 1) })}
+                  className="w-11 h-11 rounded-full bg-gray-100 text-gray-700 text-2xl font-bold flex items-center justify-center hover:bg-gray-200 active:bg-gray-300 transition-colors"
+                >
+                  −
+                </button>
+                <span className="text-3xl font-bold text-orange-600 w-10 text-center">{count}</span>
+                <button
+                  onClick={() => update({ suggestionCount: Math.min(10, count + 1) })}
+                  className="w-11 h-11 rounded-full bg-gray-100 text-gray-700 text-2xl font-bold flex items-center justify-center hover:bg-gray-200 active:bg-gray-300 transition-colors"
+                >
+                  ＋
+                </button>
+              </div>
+              <p className="text-xs text-gray-400 text-center mt-2">最小1・最大10（多いほど時間がかかります）</p>
+            </div>
+          </Card>
         </section>
 
         {/* 操作設定 */}
@@ -166,11 +217,6 @@ export default function Settings({ settings, onUpdate, onClose }: Props) {
               />
             </div>
           </Card>
-          {!settings.conditionEnabled && (
-            <p className="text-xs text-gray-500 mt-2 px-1">
-              オフの場合：外出可能・一緒に遊べる設定でAIが提案します
-            </p>
-          )}
         </section>
 
         {/* AI設定 */}
@@ -179,9 +225,7 @@ export default function Settings({ settings, onUpdate, onClose }: Props) {
           <Card>
             <div className="py-3">
               <p className="text-sm font-medium text-gray-800 mb-1">Anthropic APIキー</p>
-              <p className="text-xs text-gray-500 mb-3">
-                端末内のみに保存されます。
-              </p>
+              <p className="text-xs text-gray-500 mb-3">端末内のみに保存されます。</p>
               <div className="relative">
                 <input
                   type={showApiKey ? 'text' : 'password'}

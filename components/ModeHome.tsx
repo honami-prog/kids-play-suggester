@@ -89,49 +89,190 @@ function NoChildBanner() {
   )
 }
 
-// ─── 週末モード: コンパクトカード ────────────────────────────
+// ─── 標準提案カード ──────────────────────────────────────────
 
-function WeekendCard({
-  suggestion,
+function SuggestionCard({
+  suggestion: s,
   onToggleFavorite,
+  index,
+  compact,
 }: {
   suggestion: Suggestion
   onToggleFavorite: (id: string) => void
+  index?: number
+  compact?: boolean
 }) {
+  if (compact) {
+    return (
+      <div
+        className={`bg-white rounded-2xl px-4 py-3 shadow-sm border flex items-center gap-3 ${
+          s.favorite ? 'border-yellow-300' : 'border-orange-100'
+        }`}
+      >
+        <div className="flex-1 min-w-0">
+          <p className="font-semibold text-gray-800 text-sm truncate">{s.title}</p>
+          <div className="flex items-center gap-2 mt-1 flex-wrap">
+            {s.durationMinutes != null && (
+              <span className="text-xs text-gray-500">⏱ {s.durationMinutes}分</span>
+            )}
+            {s.isIndoor != null && (
+              <span className="text-xs text-gray-500">{s.isIndoor ? '🏠 室内' : '🌳 屋外'}</span>
+            )}
+            {s.materials.length > 0 ? (
+              <span className="text-xs bg-orange-50 text-orange-600 px-2 py-0.5 rounded-full border border-orange-100">
+                🧰 道具あり
+              </span>
+            ) : (
+              <span className="text-xs bg-gray-50 text-gray-400 px-2 py-0.5 rounded-full border border-gray-100">
+                道具不要
+              </span>
+            )}
+          </div>
+        </div>
+        <button
+          onClick={() => onToggleFavorite(s.id)}
+          className="flex-shrink-0 text-xl hover:scale-110 active:scale-95 transition-transform"
+        >
+          {s.favorite ? '⭐' : '☆'}
+        </button>
+      </div>
+    )
+  }
+
   return (
     <div
-      className={`bg-white rounded-2xl px-4 py-3 shadow-sm border flex items-center gap-3 ${
-        suggestion.favorite ? 'border-yellow-300' : 'border-orange-100'
+      className={`bg-white rounded-2xl p-4 shadow-sm border ${
+        s.favorite ? 'border-yellow-300' : 'border-orange-100'
       }`}
     >
-      <div className="flex-1 min-w-0">
-        <p className="font-semibold text-gray-800 text-sm truncate">{suggestion.title}</p>
-        <div className="flex items-center gap-2 mt-1 flex-wrap">
-          {suggestion.durationMinutes != null && (
-            <span className="text-xs text-gray-500">⏱ {suggestion.durationMinutes}分</span>
-          )}
-          {suggestion.isIndoor != null && (
-            <span className="text-xs text-gray-500">
-              {suggestion.isIndoor ? '🏠 室内' : '🌳 屋外'}
-            </span>
-          )}
-          {suggestion.materials.length > 0 ? (
-            <span className="text-xs bg-orange-50 text-orange-600 px-2 py-0.5 rounded-full border border-orange-100">
-              🧰 道具あり
-            </span>
-          ) : (
-            <span className="text-xs bg-gray-50 text-gray-400 px-2 py-0.5 rounded-full border border-gray-100">
-              道具不要
-            </span>
+      <div className="flex items-start gap-3">
+        {index != null && (
+          <span className="flex-shrink-0 w-7 h-7 rounded-full bg-orange-100 text-orange-600 font-bold text-sm flex items-center justify-center">
+            {index + 1}
+          </span>
+        )}
+        <div className="flex-1 min-w-0">
+          {s.developmentArea && (() => {
+            const area = DEVELOPMENT_AREAS.find((a) => a.id === s.developmentArea)
+            return area ? (
+              <span className={`text-xs ${area.text} ${area.bg} px-2 py-0.5 rounded-full inline-block mb-1.5`}>
+                {area.icon} {area.label}
+              </span>
+            ) : null
+          })()}
+          <p className="font-semibold text-gray-800 text-sm">{s.title}</p>
+          <div className="flex flex-wrap gap-1.5 mt-1">
+            {s.durationMinutes != null && (
+              <span className="text-xs text-gray-400">⏱{s.durationMinutes}分</span>
+            )}
+            {s.isIndoor != null && (
+              <span className="text-xs text-gray-400">{s.isIndoor ? '🏠' : '🌳'}</span>
+            )}
+            {s.isQuiet && (
+              <span className="text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full">静か</span>
+            )}
+            {s.materials.length === 0 && (
+              <span className="text-xs bg-green-50 text-green-600 px-2 py-0.5 rounded-full">道具不要</span>
+            )}
+          </div>
+          <p className="text-xs text-gray-600 mt-1.5 leading-relaxed">{s.description}</p>
+          {s.materials.length > 0 && (
+            <div className="mt-2 flex flex-wrap gap-1">
+              {s.materials.map((m, i) => (
+                <span key={i} className="text-xs bg-orange-50 text-orange-600 px-2 py-0.5 rounded-full border border-orange-100">
+                  🧰 {m}
+                </span>
+              ))}
+            </div>
           )}
         </div>
+        <button
+          onClick={() => onToggleFavorite(s.id)}
+          className="flex-shrink-0 text-xl hover:scale-110 active:scale-95 transition-transform"
+        >
+          {s.favorite ? '⭐' : '☆'}
+        </button>
       </div>
-      <button
-        onClick={() => onToggleFavorite(suggestion.id)}
-        className="flex-shrink-0 text-xl hover:scale-110 active:scale-95 transition-transform"
-      >
-        {suggestion.favorite ? '⭐' : '☆'}
-      </button>
+    </div>
+  )
+}
+
+// ─── 子供別・兄弟共通タブ表示 ────────────────────────────────
+
+function ChildGroupedView({
+  suggestions,
+  kids,
+  onToggleFavorite,
+  compact = false,
+  numbered = false,
+}: {
+  suggestions: Suggestion[]
+  kids: Child[]
+  onToggleFavorite: (id: string) => void
+  compact?: boolean
+  numbered?: boolean
+}) {
+  const childTabs = kids.filter((c) => suggestions.some((s) => s.childId === c.id))
+  const hasGroup = suggestions.some((s) => s.childId === null)
+
+  const defaultTab = childTabs[0]?.id ?? (hasGroup ? 'group' : null)
+  const [activeTab, setActiveTab] = useState<string | null>(defaultTab)
+
+  const displayed = suggestions.filter((s) =>
+    activeTab === 'group' ? s.childId === null : s.childId === activeTab,
+  )
+
+  if (!childTabs.length && !hasGroup) return null
+
+  const showTabs = childTabs.length > 1 || (childTabs.length >= 1 && hasGroup)
+
+  return (
+    <div className="space-y-3">
+      {showTabs && (
+        <div className="flex gap-1 overflow-x-auto pb-1">
+          {childTabs.map((c) => (
+            <button
+              key={c.id}
+              onClick={() => setActiveTab(c.id)}
+              className={`flex-shrink-0 text-sm px-4 py-2 rounded-full font-medium transition-colors ${
+                activeTab === c.id
+                  ? 'bg-orange-500 text-white shadow'
+                  : 'bg-white text-gray-600 border border-gray-200 hover:bg-orange-50'
+              }`}
+            >
+              🧒 {c.name}
+            </button>
+          ))}
+          {hasGroup && (
+            <button
+              onClick={() => setActiveTab('group')}
+              className={`flex-shrink-0 text-sm px-4 py-2 rounded-full font-medium transition-colors ${
+                activeTab === 'group'
+                  ? 'bg-orange-500 text-white shadow'
+                  : 'bg-white text-gray-600 border border-gray-200 hover:bg-orange-50'
+              }`}
+            >
+              👨‍👩‍👧 兄弟共通
+            </button>
+          )}
+        </div>
+      )}
+      <div className="space-y-3">
+        {displayed.map((s, i) => (
+          <SuggestionCard
+            key={s.id}
+            suggestion={s}
+            onToggleFavorite={onToggleFavorite}
+            compact={compact}
+            index={numbered ? i : undefined}
+          />
+        ))}
+        {displayed.length === 0 && (
+          <div className="text-center py-4 text-sm text-gray-400 bg-gray-50 rounded-xl">
+            この子の提案はありません
+          </div>
+        )}
+      </div>
     </div>
   )
 }
@@ -148,14 +289,6 @@ function WeekendHomeView(props: ModeHomeProps) {
     ? suggestions.filter((s) => s.createdAt === latestCreatedAt)
     : []
   const pastFavorites = suggestions.filter((s) => s.favorite && s.createdAt !== latestCreatedAt)
-
-  const [selectedChild, setSelectedChild] = useState<string | null>(
-    kids[0]?.id ?? null,
-  )
-
-  const filteredSuggestions = selectedChild
-    ? thisPeriodSuggestions.filter((s) => s.childId === selectedChild || s.childId === null)
-    : thisPeriodSuggestions
 
   return (
     <div className="space-y-4">
@@ -190,52 +323,25 @@ function WeekendHomeView(props: ModeHomeProps) {
             <h3 className="text-sm font-bold text-gray-700">⭐ 先週の振り返り</h3>
             <span className="text-xs text-gray-400">{pastFavorites.length}件お気に入り</span>
           </div>
-          <div className="space-y-2">
-            {pastFavorites.slice(0, 3).map((s) => (
-              <WeekendCard key={s.id} suggestion={s} onToggleFavorite={onToggleFavorite} />
-            ))}
-          </div>
+          <ChildGroupedView
+            suggestions={pastFavorites.slice(0, 6)}
+            kids={kids}
+            onToggleFavorite={onToggleFavorite}
+            compact
+          />
         </section>
       )}
 
       {/* 今週の提案 */}
       {thisPeriodSuggestions.length > 0 && (
         <section>
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="text-sm font-bold text-gray-700">📅 今週の提案</h3>
-            {kids.length > 1 && (
-              <div className="flex gap-1">
-                {kids.map((c) => (
-                  <button
-                    key={c.id}
-                    onClick={() => setSelectedChild(c.id)}
-                    className={`text-xs px-2 py-1 rounded-full border transition-colors ${
-                      selectedChild === c.id
-                        ? 'bg-orange-500 text-white border-orange-500'
-                        : 'bg-white text-gray-600 border-gray-200'
-                    }`}
-                  >
-                    {c.name}
-                  </button>
-                ))}
-                <button
-                  onClick={() => setSelectedChild(null)}
-                  className={`text-xs px-2 py-1 rounded-full border transition-colors ${
-                    selectedChild === null
-                      ? 'bg-orange-500 text-white border-orange-500'
-                      : 'bg-white text-gray-600 border-gray-200'
-                  }`}
-                >
-                  全員
-                </button>
-              </div>
-            )}
-          </div>
-          <div className="space-y-2">
-            {filteredSuggestions.map((s) => (
-              <WeekendCard key={s.id} suggestion={s} onToggleFavorite={onToggleFavorite} />
-            ))}
-          </div>
+          <h3 className="text-sm font-bold text-gray-700 mb-2">📅 今週の提案</h3>
+          <ChildGroupedView
+            suggestions={thisPeriodSuggestions}
+            kids={kids}
+            onToggleFavorite={onToggleFavorite}
+            compact
+          />
         </section>
       )}
 
@@ -249,7 +355,7 @@ function WeekendHomeView(props: ModeHomeProps) {
   )
 }
 
-// ─── ワーキング版: 厳選3件 + ぐずり対応 ──────────────────────
+// ─── ぐずり対応ウィジェット ──────────────────────────────────
 
 const TANTRUM_TIPS = [
   { emoji: '🎵', title: '好きな音楽をかける', time: '即' },
@@ -262,38 +368,10 @@ const TANTRUM_TIPS = [
   { emoji: '📖', title: '好きな本を1冊読む', time: '5分' },
 ]
 
-function WorkingHomeView(props: ModeHomeProps) {
-  const { suggestions, kids, settings, loading, error, onGenerate, onToggleFavorite,
-          onConditionSave, onConditionToggle, conditionExpanded } = props
-  const { conditionEnabled, condition } = settings
+function TantrumWidget() {
   const [showTantrum, setShowTantrum] = useState(false)
-
-  // 短時間・静か・道具不要を優先でソートして上位3件
-  const topSuggestions = [...suggestions]
-    .filter((s) => s.childId !== null) // 個人提案のみ
-    .sort((a, b) => {
-      const scoreA =
-        (a.durationMinutes != null && a.durationMinutes <= 20 ? 2 : 0) +
-        (a.isQuiet ? 1 : 0) +
-        (a.materials.length === 0 ? 1 : 0)
-      const scoreB =
-        (b.durationMinutes != null && b.durationMinutes <= 20 ? 2 : 0) +
-        (b.isQuiet ? 1 : 0) +
-        (b.materials.length === 0 ? 1 : 0)
-      return scoreB - scoreA
-    })
-    .slice(0, 3)
-
-  const hasSuggestions = suggestions.length > 0
-
   return (
-    <div className="space-y-4">
-      <div>
-        <h2 className="text-lg font-bold text-orange-800">💼 今日の遊び</h2>
-        <p className="text-xs text-gray-500">帰宅後に使える厳選提案</p>
-      </div>
-
-      {/* ぐずり対応ウィジェット（目立つ場所に配置） */}
+    <>
       <button
         onClick={() => setShowTantrum((v) => !v)}
         className="w-full flex items-center gap-3 bg-red-50 border-2 border-red-200 rounded-2xl px-4 py-3 text-left hover:bg-red-100 transition-colors"
@@ -305,18 +383,12 @@ function WorkingHomeView(props: ModeHomeProps) {
         </div>
         <span className="text-red-400">{showTantrum ? '▲' : '▼'}</span>
       </button>
-
       {showTantrum && (
         <div className="bg-red-50 border border-red-100 rounded-2xl p-4 space-y-2">
-          <p className="text-xs font-bold text-red-600 mb-3">
-            すぐできる気分転換 — タップして使ってみて
-          </p>
+          <p className="text-xs font-bold text-red-600 mb-3">すぐできる気分転換</p>
           <div className="grid grid-cols-2 gap-2">
             {TANTRUM_TIPS.map((tip, i) => (
-              <div
-                key={i}
-                className="bg-white rounded-xl p-3 border border-red-100 flex items-center gap-2"
-              >
+              <div key={i} className="bg-white rounded-xl p-3 border border-red-100 flex items-center gap-2">
                 <span className="text-xl flex-shrink-0">{tip.emoji}</span>
                 <div className="min-w-0">
                   <p className="text-xs font-medium text-gray-800 leading-tight">{tip.title}</p>
@@ -327,6 +399,38 @@ function WorkingHomeView(props: ModeHomeProps) {
           </div>
         </div>
       )}
+    </>
+  )
+}
+
+// ─── 帰宅後モード ─────────────────────────────────────────────
+
+function WorkingHomeView(props: ModeHomeProps) {
+  const { suggestions, kids, settings, loading, error, onGenerate, onToggleFavorite,
+          onConditionSave, onConditionToggle, conditionExpanded } = props
+  const { conditionEnabled, condition } = settings
+
+  // 短時間・静か・道具不要を優先でソート
+  const sortedSuggestions = [...suggestions].sort((a, b) => {
+    const scoreA =
+      (a.durationMinutes != null && a.durationMinutes <= 20 ? 2 : 0) +
+      (a.isQuiet ? 1 : 0) +
+      (a.materials.length === 0 ? 1 : 0)
+    const scoreB =
+      (b.durationMinutes != null && b.durationMinutes <= 20 ? 2 : 0) +
+      (b.isQuiet ? 1 : 0) +
+      (b.materials.length === 0 ? 1 : 0)
+    return scoreB - scoreA
+  })
+
+  return (
+    <div className="space-y-4">
+      <div>
+        <h2 className="text-lg font-bold text-orange-800">💼 今日の遊び</h2>
+        <p className="text-xs text-gray-500">帰宅後に使える厳選提案</p>
+      </div>
+
+      <TantrumWidget />
 
       {conditionEnabled && (
         <ConditionInput
@@ -347,60 +451,22 @@ function WorkingHomeView(props: ModeHomeProps) {
       {kids.length === 0 && <NoChildBanner />}
       {error && <ErrorBanner error={error} />}
 
-      {hasSuggestions && topSuggestions.length > 0 && (
-        <section className="space-y-3">
-          <div className="flex items-center gap-2">
-            <h3 className="text-sm font-bold text-gray-700">⚡ 今夜の厳選3件</h3>
+      {sortedSuggestions.length > 0 && (
+        <section>
+          <div className="flex items-center gap-2 mb-2">
+            <h3 className="text-sm font-bold text-gray-700">⚡ 厳選提案</h3>
             <span className="text-xs text-gray-400">短時間・静か・道具不要を優先</span>
           </div>
-          {topSuggestions.map((s, i) => (
-            <div
-              key={s.id}
-              className={`bg-white rounded-2xl p-4 shadow-sm border ${
-                s.favorite ? 'border-yellow-300' : 'border-orange-100'
-              }`}
-            >
-              <div className="flex items-start gap-3">
-                <span className="flex-shrink-0 w-7 h-7 rounded-full bg-orange-100 text-orange-600 font-bold text-sm flex items-center justify-center">
-                  {i + 1}
-                </span>
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-gray-800 text-sm">{s.title}</p>
-                  <div className="flex flex-wrap gap-1.5 mt-1">
-                    {s.durationMinutes != null && (
-                      <span className="text-xs text-gray-400">⏱{s.durationMinutes}分</span>
-                    )}
-                    {s.isIndoor != null && (
-                      <span className="text-xs text-gray-400">{s.isIndoor ? '🏠' : '🌳'}</span>
-                    )}
-                    {s.isQuiet && (
-                      <span className="text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full">
-                        静か
-                      </span>
-                    )}
-                    {s.materials.length === 0 && (
-                      <span className="text-xs bg-green-50 text-green-600 px-2 py-0.5 rounded-full">
-                        道具不要
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-xs text-gray-500 mt-1.5 leading-relaxed line-clamp-2">
-                    {s.description}
-                  </p>
-                </div>
-                <button
-                  onClick={() => onToggleFavorite(s.id)}
-                  className="flex-shrink-0 text-xl hover:scale-110 active:scale-95 transition-transform"
-                >
-                  {s.favorite ? '⭐' : '☆'}
-                </button>
-              </div>
-            </div>
-          ))}
+          <ChildGroupedView
+            suggestions={sortedSuggestions}
+            kids={kids}
+            onToggleFavorite={onToggleFavorite}
+            numbered
+          />
         </section>
       )}
 
-      {!hasSuggestions && !loading && (
+      {!suggestions.length && !loading && (
         <div className="text-center py-10 text-gray-400">
           <div className="text-5xl mb-3">💼</div>
           <p className="text-sm">帰宅後に使える遊びをAIに提案してもらいましょう</p>
@@ -410,12 +476,11 @@ function WorkingHomeView(props: ModeHomeProps) {
   )
 }
 
-// ─── 自宅保育版: 時間帯別 + 発達ピラミッド ──────────────────
+// ─── 発達ピラミッド ───────────────────────────────────────────
 
 function DevelopmentPyramid({ suggestions }: { suggestions: Suggestion[] }) {
   const favorites = suggestions.filter((s) => s.favorite)
   const total = favorites.length
-
   if (total === 0) return null
 
   const counts = DEVELOPMENT_AREAS.map((area) => ({
@@ -448,6 +513,8 @@ function DevelopmentPyramid({ suggestions }: { suggestions: Suggestion[] }) {
     </div>
   )
 }
+
+// ─── 消耗品在庫ウィジェット ──────────────────────────────────
 
 function QuickStockWidget({
   toys,
@@ -487,6 +554,8 @@ function QuickStockWidget({
   )
 }
 
+// ─── 自宅保育モード ──────────────────────────────────────────
+
 function FulltimeHomeView(props: ModeHomeProps) {
   const { suggestions, kids, toys, settings, loading, error, onGenerate, onToggleFavorite,
           onConditionSave, onConditionToggle, conditionExpanded, onUpdateToys } = props
@@ -494,14 +563,9 @@ function FulltimeHomeView(props: ModeHomeProps) {
 
   const [activeSlot, setActiveSlot] = useState<TimeSlot>(currentTimeSlot())
 
-  const slotSuggestions = suggestions.filter(
-    (s) => s.timeSlot === activeSlot,
-  )
-  // timeSlot未設定の提案は全時間帯に表示
+  const slotSuggestions = suggestions.filter((s) => s.timeSlot === activeSlot)
   const unslotted = suggestions.filter((s) => !s.timeSlot)
-  const displaySuggestions = slotSuggestions.length > 0
-    ? slotSuggestions
-    : unslotted
+  const displaySuggestions = slotSuggestions.length > 0 ? slotSuggestions : unslotted
 
   return (
     <div className="space-y-4">
@@ -510,7 +574,6 @@ function FulltimeHomeView(props: ModeHomeProps) {
         <p className="text-xs text-gray-500">時間帯別に最適な遊びを</p>
       </div>
 
-      {/* 消耗品在庫クイック更新 */}
       <QuickStockWidget toys={toys} onUpdateToys={onUpdateToys} />
 
       {conditionEnabled && (
@@ -532,7 +595,6 @@ function FulltimeHomeView(props: ModeHomeProps) {
       {kids.length === 0 && <NoChildBanner />}
       {error && <ErrorBanner error={error} />}
 
-      {/* 発達ピラミッド */}
       <DevelopmentPyramid suggestions={suggestions} />
 
       {suggestions.length > 0 && (
@@ -553,65 +615,17 @@ function FulltimeHomeView(props: ModeHomeProps) {
                 >
                   <span className="text-lg">{slot.icon}</span>
                   <span className="text-xs font-bold mt-0.5">{slot.label}</span>
-                  {count > 0 && (
-                    <span className="text-xs text-gray-400">{count}件</span>
-                  )}
+                  {count > 0 && <span className="text-xs text-gray-400">{count}件</span>}
                 </button>
               )
             })}
           </div>
 
-          {/* 提案一覧 */}
-          {displaySuggestions.length > 0 ? (
-            <div className="space-y-3">
-              {displaySuggestions.map((s) => (
-                <div
-                  key={s.id}
-                  className={`bg-white rounded-2xl p-4 shadow-sm border ${
-                    s.favorite ? 'border-yellow-300' : 'border-orange-100'
-                  }`}
-                >
-                  <div className="flex items-start justify-between gap-2 mb-1">
-                    <div className="flex-1">
-                      {s.developmentArea && (() => {
-                        const area = DEVELOPMENT_AREAS.find((a) => a.id === s.developmentArea)
-                        return area ? (
-                          <span className={`text-xs ${area.text} ${area.bg} px-2 py-0.5 rounded-full inline-block mb-1.5`}>
-                            {area.icon} {area.label}
-                          </span>
-                        ) : null
-                      })()}
-                      <p className="font-semibold text-gray-800 text-sm">{s.title}</p>
-                    </div>
-                    <button
-                      onClick={() => onToggleFavorite(s.id)}
-                      className="flex-shrink-0 text-xl hover:scale-110 active:scale-95 transition-transform"
-                    >
-                      {s.favorite ? '⭐' : '☆'}
-                    </button>
-                  </div>
-                  <p className="text-xs text-gray-600 leading-relaxed">{s.description}</p>
-                  <div className="flex flex-wrap gap-1.5 mt-2">
-                    {s.durationMinutes != null && (
-                      <span className="text-xs text-gray-400">⏱{s.durationMinutes}分</span>
-                    )}
-                    {s.isIndoor != null && (
-                      <span className="text-xs text-gray-400">{s.isIndoor ? '🏠' : '🌳'}</span>
-                    )}
-                    {s.materials.map((m, i) => (
-                      <span key={i} className="text-xs bg-orange-50 text-orange-600 px-2 py-0.5 rounded-full border border-orange-100">
-                        🧰 {m}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-6 text-gray-400 bg-gray-50 rounded-xl">
-              <p className="text-sm">この時間帯の提案がありません</p>
-            </div>
-          )}
+          <ChildGroupedView
+            suggestions={displaySuggestions}
+            kids={kids}
+            onToggleFavorite={onToggleFavorite}
+          />
         </>
       )}
 
@@ -630,11 +644,8 @@ function FulltimeHomeView(props: ModeHomeProps) {
 function QuickHomeView(props: ModeHomeProps) {
   const { suggestions, kids, loading, error, onGenerate, onToggleFavorite } = props
 
-  const top3 = suggestions.slice(0, 3)
-
   return (
     <div className="space-y-4">
-      {/* おまかせボタン（ど真ん中・大） */}
       <div className="py-4">
         <button
           onClick={onGenerate}
@@ -664,42 +675,15 @@ function QuickHomeView(props: ModeHomeProps) {
       {kids.length === 0 && <NoChildBanner />}
       {error && <ErrorBanner error={error} />}
 
-      {top3.length > 0 && (
-        <div className="space-y-3">
-          <p className="text-xs text-gray-500 text-center">最新の提案 {top3.length}件</p>
-          {top3.map((s) => (
-            <div
-              key={s.id}
-              className={`bg-white rounded-2xl p-4 shadow-sm border ${
-                s.favorite ? 'border-yellow-300' : 'border-orange-100'
-              }`}
-            >
-              <div className="flex items-start justify-between gap-2">
-                <div className="flex-1">
-                  <p className="font-bold text-gray-800">{s.title}</p>
-                  <div className="flex gap-2 mt-1">
-                    {s.durationMinutes != null && (
-                      <span className="text-xs text-gray-400">⏱{s.durationMinutes}分</span>
-                    )}
-                    {s.isIndoor != null && (
-                      <span className="text-xs text-gray-400">{s.isIndoor ? '🏠' : '🌳'}</span>
-                    )}
-                  </div>
-                  <p className="text-sm text-gray-600 mt-1.5 leading-relaxed">{s.description}</p>
-                </div>
-                <button
-                  onClick={() => onToggleFavorite(s.id)}
-                  className="flex-shrink-0 text-2xl hover:scale-110 active:scale-95 transition-transform"
-                >
-                  {s.favorite ? '⭐' : '☆'}
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
+      {suggestions.length > 0 && (
+        <ChildGroupedView
+          suggestions={suggestions}
+          kids={kids}
+          onToggleFavorite={onToggleFavorite}
+        />
       )}
 
-      {!top3.length && !loading && (
+      {!suggestions.length && !loading && (
         <div className="text-center py-6 text-gray-400">
           <p className="text-sm">上のボタンを押してください</p>
         </div>
@@ -708,27 +692,15 @@ function QuickHomeView(props: ModeHomeProps) {
   )
 }
 
-// ─── たまにモード（標準リスト） ──────────────────────────────
+// ─── たまにモード ─────────────────────────────────────────────
 
 function OccasionalHomeView(props: ModeHomeProps) {
   const { suggestions, kids, settings, loading, error, onGenerate, onToggleFavorite,
           onConditionSave, onConditionToggle, conditionExpanded } = props
   const { conditionEnabled, condition } = settings
-  const [activeTab, setActiveTab] = useState<string | null>(kids[0]?.id ?? null)
   const [onlyFav, setOnlyFav] = useState(false)
 
-  const tabSuggestions = activeTab
-    ? suggestions.filter((s) => s.childId === activeTab)
-    : suggestions.filter((s) => s.childId === null)
-
-  const displayed = onlyFav ? tabSuggestions.filter((s) => s.favorite) : tabSuggestions
-
-  const tabs = [
-    ...kids
-      .filter((c) => suggestions.some((s) => s.childId === c.id))
-      .map((c) => ({ id: c.id, label: c.name })),
-    ...(suggestions.some((s) => s.childId === null) ? [{ id: null, label: '兄弟共通' }] : []),
-  ]
+  const filtered = onlyFav ? suggestions.filter((s) => s.favorite) : suggestions
 
   return (
     <div className="space-y-4">
@@ -752,63 +724,23 @@ function OccasionalHomeView(props: ModeHomeProps) {
 
       {suggestions.length > 0 && (
         <>
-          <div className="flex items-center gap-2">
-            <div className="flex gap-1 overflow-x-auto pb-1 flex-1">
-              {tabs.map((tab) => (
-                <button
-                  key={String(tab.id)}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`flex-shrink-0 text-sm px-4 py-2 rounded-full font-medium transition-colors ${
-                    activeTab === tab.id
-                      ? 'bg-orange-500 text-white shadow'
-                      : 'bg-white text-gray-600 border border-gray-200 hover:bg-orange-50'
-                  }`}
-                >
-                  {tab.id === null ? '👨‍👩‍👧 ' : '🧒 '}{tab.label}
-                </button>
-              ))}
-            </div>
+          <div className="flex justify-end">
             <button
               onClick={() => setOnlyFav((v) => !v)}
-              className={`flex-shrink-0 text-sm px-3 py-2 rounded-full transition-colors ${
+              className={`text-sm px-3 py-2 rounded-full transition-colors ${
                 onlyFav
                   ? 'bg-yellow-100 text-yellow-700 border border-yellow-300'
                   : 'bg-white text-gray-500 border border-gray-200'
               }`}
             >
-              {onlyFav ? '⭐' : '☆'}
+              {onlyFav ? '⭐ お気に入りのみ' : '☆ すべて表示'}
             </button>
           </div>
-          <div className="space-y-3">
-            {displayed.map((s) => (
-              <div
-                key={s.id}
-                className={`bg-white rounded-2xl p-4 shadow-sm border ${
-                  s.favorite ? 'border-yellow-300' : 'border-orange-100'
-                }`}
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <h4 className="font-semibold text-gray-800 flex-1">{s.title}</h4>
-                  <button
-                    onClick={() => onToggleFavorite(s.id)}
-                    className="flex-shrink-0 text-xl hover:scale-110 active:scale-95 transition-transform"
-                  >
-                    {s.favorite ? '⭐' : '☆'}
-                  </button>
-                </div>
-                <p className="text-sm text-gray-600 mt-2 leading-relaxed">{s.description}</p>
-                {s.materials.length > 0 && (
-                  <div className="mt-3 flex flex-wrap gap-1.5">
-                    {s.materials.map((m, i) => (
-                      <span key={i} className="text-xs bg-orange-50 text-orange-600 px-2 py-1 rounded-full border border-orange-100">
-                        🧰 {m}
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
+          <ChildGroupedView
+            suggestions={filtered}
+            kids={kids}
+            onToggleFavorite={onToggleFavorite}
+          />
         </>
       )}
 
@@ -822,15 +754,129 @@ function OccasionalHomeView(props: ModeHomeProps) {
   )
 }
 
+// ─── カスタムモード ───────────────────────────────────────────
+
+function CustomHomeView(props: ModeHomeProps) {
+  const { suggestions, kids, toys, settings, loading, error, onGenerate, onToggleFavorite,
+          onConditionSave, onConditionToggle, conditionExpanded, onUpdateToys } = props
+  const { conditionEnabled, condition, customFeatures = [] } = settings
+
+  const has = (id: string) => customFeatures.includes(id)
+
+  // 厳選フィルター適用
+  const displaySuggestions = has('top3_filter')
+    ? [...suggestions].sort((a, b) => {
+        const score = (s: Suggestion) =>
+          (s.durationMinutes != null && s.durationMinutes <= 20 ? 2 : 0) +
+          (s.isQuiet ? 1 : 0) +
+          (s.materials.length === 0 ? 1 : 0)
+        return score(b) - score(a)
+      })
+    : suggestions
+
+  const [activeSlot, setActiveSlot] = useState<TimeSlot>(currentTimeSlot())
+  const slotFiltered = has('timeslot')
+    ? displaySuggestions.filter((s) => !s.timeSlot || s.timeSlot === activeSlot)
+    : displaySuggestions
+
+  const pastFavorites = has('favorites_recap')
+    ? suggestions.filter((s) => s.favorite && s.createdAt !== suggestions[0]?.createdAt)
+    : []
+
+  return (
+    <div className="space-y-4">
+      <div>
+        <h2 className="text-lg font-bold text-orange-800">🛠️ カスタムモード</h2>
+        <p className="text-xs text-gray-500">
+          {customFeatures.length === 0
+            ? '設定でお好みの機能を追加できます'
+            : `${customFeatures.length}個の機能が有効`}
+        </p>
+      </div>
+
+      {has('tantrum') && <TantrumWidget />}
+      {has('quick_stock') && <QuickStockWidget toys={toys} onUpdateToys={onUpdateToys} />}
+
+      {conditionEnabled && (
+        <ConditionInput
+          condition={condition}
+          onSave={onConditionSave}
+          expanded={conditionExpanded}
+          onToggleExpand={onConditionToggle}
+        />
+      )}
+
+      <GenerateButton loading={loading} disabled={kids.length === 0} onClick={onGenerate} />
+
+      {kids.length === 0 && <NoChildBanner />}
+      {error && <ErrorBanner error={error} />}
+
+      {has('development_pyramid') && <DevelopmentPyramid suggestions={suggestions} />}
+
+      {pastFavorites.length > 0 && (
+        <section>
+          <h3 className="text-sm font-bold text-gray-700 mb-2">⭐ 前回のお気に入り</h3>
+          <ChildGroupedView
+            suggestions={pastFavorites.slice(0, 6)}
+            kids={kids}
+            onToggleFavorite={onToggleFavorite}
+            compact
+          />
+        </section>
+      )}
+
+      {suggestions.length > 0 && (
+        <>
+          {has('timeslot') && (
+            <div className="flex gap-2">
+              {TIME_SLOTS.map((slot) => (
+                <button
+                  key={slot.id}
+                  onClick={() => setActiveSlot(slot.id)}
+                  className={`flex-1 flex flex-col items-center py-2.5 rounded-xl border-2 transition-all ${
+                    activeSlot === slot.id
+                      ? 'border-orange-500 bg-orange-50 text-orange-700'
+                      : 'border-gray-200 bg-white text-gray-600'
+                  }`}
+                >
+                  <span className="text-lg">{slot.icon}</span>
+                  <span className="text-xs font-bold mt-0.5">{slot.label}</span>
+                </button>
+              ))}
+            </div>
+          )}
+          <ChildGroupedView
+            suggestions={slotFiltered}
+            kids={kids}
+            onToggleFavorite={onToggleFavorite}
+            numbered={has('top3_filter')}
+          />
+        </>
+      )}
+
+      {!suggestions.length && !loading && (
+        <div className="text-center py-10 text-gray-400">
+          <div className="text-5xl mb-3">🛠️</div>
+          <p className="text-sm">ボタンを押して遊びを提案してもらいましょう</p>
+          {customFeatures.length === 0 && (
+            <p className="text-xs mt-2">設定 ⚙️ → カスタム機能で表示を変更できます</p>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ─── メインエクスポート ──────────────────────────────────────
 
 export default function ModeHome(props: ModeHomeProps & { mode: AppMode }) {
   const { mode } = props
   switch (mode) {
-    case 'weekend':   return <WeekendHomeView  {...props} />
-    case 'working':   return <WorkingHomeView  {...props} />
-    case 'fulltime':  return <FulltimeHomeView {...props} />
-    case 'quick':     return <QuickHomeView    {...props} />
-    case 'occasional':return <OccasionalHomeView {...props} />
+    case 'weekend':    return <WeekendHomeView    {...props} />
+    case 'working':    return <WorkingHomeView    {...props} />
+    case 'fulltime':   return <FulltimeHomeView   {...props} />
+    case 'quick':      return <QuickHomeView      {...props} />
+    case 'occasional': return <OccasionalHomeView {...props} />
+    case 'custom':     return <CustomHomeView     {...props} />
   }
 }

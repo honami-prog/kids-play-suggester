@@ -105,7 +105,6 @@ export default function Onboarding({ onComplete }: Props) {
                       {m.label}
                     </p>
                     <p className="text-xs text-gray-500 mt-0.5">{m.desc}</p>
-                    <p className="text-xs text-gray-400 mt-1">{m.hint}</p>
                   </div>
                   {mode === m.id && (
                     <span className="ml-auto flex-shrink-0 text-orange-500 text-lg font-bold">
